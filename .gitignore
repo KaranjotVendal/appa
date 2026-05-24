@@ -1,0 +1,14 @@
+# uv / Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Per-machine state
+.machine-*
+
+# Editor / OS scratch
+.DS_Store
+*.swp
+
+/docs/*
