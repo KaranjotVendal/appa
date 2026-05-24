@@ -1,0 +1,17 @@
+{
+  "model": "opus[1m]",
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "plannotator@plannotator": true
+  },
+  "effortLevel": "medium",
+  "theme": "dark",
+  "extraKnownMarketplaces": {
+    "plannotator": {
+      "source": {
+        "source": "github",
+        "repo": "backnotprop/plannotator"
+      }
+    }
+  }
+}

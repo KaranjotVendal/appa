@@ -1,0 +1,6 @@
+- [No spec commits](feedback_no_spec_commits.md) — skip git commit when brainstorming writes a design doc; user reviews it locally
+- [Gitignore superpowers docs](feedback_gitignore_superpowers_docs.md) — add /docs/* (or equivalent) to .gitignore on new repos so superpowers artifacts can't be committed
+- [Per-task approval](feedback_per_task_approval.md) — when executing a plan, describe each task and wait for explicit go-ahead; never batch tasks autonomously
+- [Commit each iteration, squash per task](feedback_commit_then_squash.md) — micro-commit during task execution, squash to one commit per task at the end
+- [Plannotator before commit](feedback_plannotator_before_commit.md) — never commit before plannotator has reviewed; soft-reset if you already did
+- [uv native build backend](feedback_uv_native_build_backend.md) — when setting up a Python project with uv, use uv_build (not hatchling/setuptools) in pyproject.toml
