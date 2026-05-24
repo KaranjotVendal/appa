@@ -1,6 +1,8 @@
 import argparse
+import datetime
 import os
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -111,6 +113,47 @@ def cmd_memory_pull(args: argparse.Namespace) -> None:
         sys.exit(3)
 
 
+def cmd_memory_push(args: argparse.Namespace) -> None:
+    if not _have("claude"):
+        sys.exit("memory push is claude-only; claude not detected")
+    _project_for_claude()
+
+
+def cmd_memory_diff(args: argparse.Namespace) -> None:
+    subprocess.run(
+        ["git", "-C", str(REPO_DIR), "diff", "--", "memory/snapshot/", "instructions/"],
+        check=False,
+    )
+
+
+def cmd_commit(args: argparse.Namespace) -> None:
+    msg = args.message or f"sync: {HOSTNAME} {datetime.date.today().isoformat()}"
+    subprocess.run(["git", "-C", str(REPO_DIR), "add", "-A"], check=True)
+    diff = subprocess.run(
+        ["git", "-C", str(REPO_DIR), "diff", "--cached", "--quiet"],
+        check=False,
+    )
+    if diff.returncode == 0:
+        print("nothing to commit")
+        return
+    subprocess.run(["git", "-C", str(REPO_DIR), "commit", "-m", msg], check=True)
+
+
+def cmd_status(args: argparse.Namespace) -> None:
+    print("repo:", flush=True)
+    subprocess.run(["git", "-C", str(REPO_DIR), "status", "--short"], check=False)
+    print()
+    print("live memory diff (claude):", flush=True)
+    if _have("claude"):
+        live = _claude_memory_dir()
+        subprocess.run(
+            ["diff", "-rq", str(REPO_DIR / "memory/snapshot"), str(live)],
+            check=False,
+        )
+    else:
+        print("  claude not present")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="appa", description="Portable coding-agent workflow")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -122,13 +165,25 @@ def main() -> None:
     p_pull = sub_mem.add_parser("pull")
     p_pull.add_argument("--theirs", action="store_true")
     p_pull.add_argument("--ours", action="store_true")
+    sub_mem.add_parser("push")
+    sub_mem.add_parser("diff")
+
+    p_commit = sub.add_parser("commit", help="stage + commit tracked files")
+    p_commit.add_argument("-m", dest="message", default=None)
+    sub.add_parser("status", help="show drift between repo and live state")
 
     args = parser.parse_args()
     if args.cmd == "memory":
-        {"pull": cmd_memory_pull}[args.mem_cmd](args)
+        {
+            "pull": cmd_memory_pull,
+            "push": cmd_memory_push,
+            "diff": cmd_memory_diff,
+        }[args.mem_cmd](args)
         return
     dispatch = {
         "bootstrap": cmd_bootstrap,
         "sync": cmd_sync,
+        "commit": cmd_commit,
+        "status": cmd_status,
     }
     dispatch[args.cmd](args)
