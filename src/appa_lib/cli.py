@@ -54,13 +54,79 @@ def cmd_bootstrap(args: argparse.Namespace) -> None:
     os.execv(str(script), [str(script)])
 
 
+def _claude_memory_dir() -> Path:
+    return Path.home() / ".claude/projects" / encode_path(_primary_wd()) / "memory"
+
+
+def _print_diff(name: str, ours: str, theirs: str) -> None:
+    print()
+    print(f"CONFLICT: {name}")
+    print("----- canonical (ours) -----")
+    print(ours, end="")
+    print("----- live (theirs) --------")
+    print(theirs, end="")
+    print("----------------------------")
+
+
+def cmd_memory_pull(args: argparse.Namespace) -> None:
+    if not _have("claude"):
+        sys.exit("memory pull is claude-only; claude not detected")
+    from appa_lib.transform_pull import transform_pull
+
+    live = _claude_memory_dir()
+    snap = REPO_DIR / "memory/snapshot"
+    snap.mkdir(parents=True, exist_ok=True)
+    for old in snap.iterdir():
+        if old.is_file():
+            old.unlink()
+    for src in live.iterdir():
+        if src.is_file():
+            (snap / src.name).write_text(src.read_text())
+
+    conflicts = 0
+    for src in sorted(live.glob("*.md")):
+        if src.name == "MEMORY.md":
+            continue
+        base = src.stem
+        if base.startswith("feedback_"):
+            base = base[len("feedback_") :]
+        canonical = REPO_DIR / "instructions" / f"{base}.md"
+        rendered = transform_pull(src.read_text(), scope="global")
+        if not canonical.exists():
+            canonical.write_text(rendered)
+            print(f"  pulled (new):    {base}")
+            continue
+        existing = canonical.read_text()
+        if existing == rendered:
+            continue
+        if args.theirs:
+            canonical.write_text(rendered)
+            print(f"  pulled (theirs): {base}")
+        elif args.ours:
+            print(f"  kept (ours):     {base}")
+        else:
+            _print_diff(base, existing, rendered)
+            conflicts += 1
+    if conflicts:
+        sys.exit(3)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="appa", description="Portable coding-agent workflow")
     sub = parser.add_subparsers(dest="cmd", required=True)
     sub.add_parser("bootstrap", help="run bootstrap.sh")
     sub.add_parser("sync", help="re-project instructions to detected agents")
 
+    p_mem = sub.add_parser("memory", help="memory operations (claude-only)")
+    sub_mem = p_mem.add_subparsers(dest="mem_cmd", required=True)
+    p_pull = sub_mem.add_parser("pull")
+    p_pull.add_argument("--theirs", action="store_true")
+    p_pull.add_argument("--ours", action="store_true")
+
     args = parser.parse_args()
+    if args.cmd == "memory":
+        {"pull": cmd_memory_pull}[args.mem_cmd](args)
+        return
     dispatch = {
         "bootstrap": cmd_bootstrap,
         "sync": cmd_sync,
