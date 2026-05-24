@@ -46,7 +46,7 @@ def _first_body_line(body: str) -> str:
 def transform_pull(text: str, scope: str) -> str:
     fm_raw, body = _split_frontmatter(text)
     fm = _parse_frontmatter(fm_raw)
-    name = fm.get("name", "").strip()
+    name = fm.get("name", "").strip().replace("-", "_")
     if not name:
         raise ValueError("frontmatter missing 'name'")
     metadata = fm.get("metadata") or {}

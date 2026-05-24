@@ -18,7 +18,7 @@ Body line two.
 """
 
 EXPECTED_OUTPUT = """---
-name: per-task-approval
+name: per_task_approval
 scope: global
 type: feedback
 description: Wait for explicit go-ahead per task.
