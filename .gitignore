@@ -7,6 +7,9 @@ __pycache__/
 # Per-machine state
 .machine-*
 
+# Sandboxed snapshots of live agent state (test/validation only)
+fixtures/
+
 # Editor / OS scratch
 .DS_Store
 *.swp
