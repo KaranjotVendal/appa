@@ -4,7 +4,7 @@ from appa_lib.encode_path import encode_path
 
 
 def test_absolute_path():
-    assert encode_path("/Users/karanjot.vendal/dev") == "-Users-karanjot.vendal-dev"
+    assert encode_path("/Users/karanjot.vendal/dev") == "-Users-karanjot-vendal-dev"
 
 
 def test_root():
@@ -13,6 +13,10 @@ def test_root():
 
 def test_trailing_slash_is_stripped():
     assert encode_path("/Users/x/dev/") == "-Users-x-dev"
+
+
+def test_dots_in_segments_become_hyphens():
+    assert encode_path("/Users/a.b/c.d") == "-Users-a-b-c-d"
 
 
 def test_rejects_relative_path():

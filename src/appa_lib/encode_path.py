@@ -5,4 +5,4 @@ def encode_path(path: str) -> str:
     if not path.startswith("/"):
         raise ValueError(f"encode_path requires an absolute path, got: {path!r}")
     stripped = path.rstrip("/") or "/"
-    return stripped.replace("/", "-")
+    return stripped.replace("/", "-").replace(".", "-")
