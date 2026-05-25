@@ -88,3 +88,26 @@ case ":$PATH:" in
     echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
     ;;
 esac
+
+# --- claude plugin install ---
+if [[ $HAVE_CLAUDE -eq 1 ]]; then
+  echo "claude: ensuring marketplaces and plugins"
+  ( cd "$REPO_DIR" && uv run python - "$REPO_DIR/agents/claude/settings.json" ) <<'PY'
+import json, subprocess, sys
+settings = json.loads(open(sys.argv[1]).read())
+for name, mp in (settings.get("extraKnownMarketplaces") or {}).items():
+    src = mp.get("source", {})
+    if src.get("source") == "github":
+        target = src.get("repo")
+    else:
+        print(f"  marketplace {name}: unsupported source {src.get('source')!r}", file=sys.stderr)
+        continue
+    print(f"  marketplace add: {name} <- {target}", flush=True)
+    subprocess.run(["claude", "plugin", "marketplace", "add", target], check=False)
+for plugin_id, enabled in (settings.get("enabledPlugins") or {}).items():
+    if not enabled:
+        continue
+    print(f"  plugin install: {plugin_id}", flush=True)
+    subprocess.run(["claude", "plugin", "install", plugin_id], check=False)
+PY
+fi
