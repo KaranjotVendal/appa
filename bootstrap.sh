@@ -110,9 +110,16 @@ for name, mp in (settings.get("extraKnownMarketplaces") or {}).items():
         continue
     print(f"  marketplace add: {name} <- {target}", flush=True)
     subprocess.run(["claude", "plugin", "marketplace", "add", target], check=False)
+seen_marketplaces = set()
 for plugin_id, enabled in (settings.get("enabledPlugins") or {}).items():
     if not enabled:
         continue
+    if "@" in plugin_id:
+        mp_name = plugin_id.split("@", 1)[1]
+        if mp_name not in seen_marketplaces:
+            seen_marketplaces.add(mp_name)
+            print(f"  marketplace update: {mp_name}", flush=True)
+            subprocess.run(["claude", "plugin", "marketplace", "update", mp_name], check=False)
     print(f"  plugin install: {plugin_id}", flush=True)
     subprocess.run(["claude", "plugin", "install", plugin_id], check=False)
 PY
