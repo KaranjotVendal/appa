@@ -75,3 +75,16 @@ if [[ $HAVE_PI -eq 1 ]]; then
   _link "$REPO_DIR/commands" "$HOME/.pi/agent/prompts"
   _link "$REPO_DIR/skills"   "$HOME/.pi/agent/skills"
 fi
+
+# --- install appa CLI symlink ---
+mkdir -p "$HOME/.local/bin"
+_link "$REPO_DIR/.venv/bin/appa" "$HOME/.local/bin/appa"
+
+case ":$PATH:" in
+  *":$HOME/.local/bin:"*) ;;
+  *)
+    echo
+    echo "note: $HOME/.local/bin is not on PATH. Add to your shell profile:"
+    echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
+    ;;
+esac
