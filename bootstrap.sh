@@ -1,6 +1,36 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# --- arg parsing ---
+AGENT_OVERRIDE=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --agent)
+      AGENT_OVERRIDE="${2:-}"
+      shift 2
+      ;;
+    --agent=*)
+      AGENT_OVERRIDE="${1#--agent=}"
+      shift
+      ;;
+    -h|--help)
+      cat <<USAGE
+usage: bootstrap.sh [--agent claude|pi|both]
+
+  --agent <name>   skip the prompt and configure only the named agent(s).
+                   one of: claude, pi, both. when both agents are detected
+                   and --agent is not passed, bootstrap prompts interactively.
+USAGE
+      exit 0
+      ;;
+    *)
+      echo "error: unknown argument: $1" >&2
+      echo "run with --help for usage" >&2
+      exit 2
+      ;;
+  esac
+done
+
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOSTNAME_SHORT="$(hostname -s)"
 MACHINE_FILE="$REPO_DIR/.machine-$HOSTNAME_SHORT"
@@ -22,6 +52,39 @@ if [[ $HAVE_CLAUDE -eq 0 && $HAVE_PI -eq 0 ]]; then
   echo "error: neither 'claude' nor 'pi' installed" >&2
   echo "install at least one agent before running bootstrap" >&2
   exit 1
+fi
+
+# --- apply --agent override or prompt when both detected ---
+if [[ -n "$AGENT_OVERRIDE" ]]; then
+  case "$AGENT_OVERRIDE" in
+    claude) HAVE_PI=0 ;;
+    pi)     HAVE_CLAUDE=0 ;;
+    both)   ;;
+    *)
+      echo "error: --agent must be one of: claude, pi, both (got: $AGENT_OVERRIDE)" >&2
+      exit 2
+      ;;
+  esac
+  if [[ $HAVE_CLAUDE -eq 0 && $HAVE_PI -eq 0 ]]; then
+    echo "error: --agent $AGENT_OVERRIDE selected, but that agent is not installed" >&2
+    exit 1
+  fi
+elif [[ $HAVE_CLAUDE -eq 1 && $HAVE_PI -eq 1 ]]; then
+  echo "Both 'claude' and 'pi' are installed. Which should appa configure?"
+  echo "  1) pi only"
+  echo "  2) claude only"
+  echo "  3) both"
+  read -r -p "Choice [3]: " choice
+  choice="${choice:-3}"
+  case "$choice" in
+    1) HAVE_CLAUDE=0 ;;
+    2) HAVE_PI=0 ;;
+    3) ;;
+    *)
+      echo "error: invalid choice '$choice'; expected 1, 2, or 3" >&2
+      exit 1
+      ;;
+  esac
 fi
 
 HAVE_PLANNOTATOR=0
