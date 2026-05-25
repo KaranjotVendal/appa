@@ -70,10 +70,11 @@ fi
 
 # --- pi symlinks ---
 # Note: pi's settings.json is managed per-machine, not in appa.
+# Pi skills come from agents/pi/skills/ (cherry-picked from superpowers); appa/skills/ is reserved for shared user-authored skills.
 if [[ $HAVE_PI -eq 1 ]]; then
   echo "pi: linking shared content"
-  _link "$REPO_DIR/commands" "$HOME/.pi/agent/prompts"
-  _link "$REPO_DIR/skills"   "$HOME/.pi/agent/skills"
+  _link "$REPO_DIR/commands"         "$HOME/.pi/agent/prompts"
+  _link "$REPO_DIR/agents/pi/skills" "$HOME/.pi/agent/skills"
 fi
 
 # --- install appa CLI symlink ---
