@@ -48,9 +48,13 @@ _link() {
     fi
     rm "$dst"
   elif [[ -e "$dst" ]]; then
-    mkdir -p "$BACKUP_DIR"
-    mv "$dst" "$BACKUP_DIR/"
-    echo "  backed up: $dst -> $BACKUP_DIR/"
+    # Mirror the path under HOME inside BACKUP_DIR so different source paths with the
+    # same basename (e.g. ~/.claude/skills and ~/.pi/agent/skills) don't collide.
+    local rel="${dst#$HOME/}"
+    local backup_target="$BACKUP_DIR/$rel"
+    mkdir -p "$(dirname "$backup_target")"
+    mv "$dst" "$backup_target"
+    echo "  backed up: $dst -> $backup_target"
   fi
   mkdir -p "$(dirname "$dst")"
   ln -s "$src" "$dst"
