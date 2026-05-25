@@ -111,3 +111,21 @@ for plugin_id, enabled in (settings.get("enabledPlugins") or {}).items():
     subprocess.run(["claude", "plugin", "install", plugin_id], check=False)
 PY
 fi
+
+# --- project instructions to pi (claude-side projection deferred) ---
+if [[ $HAVE_PI -eq 1 ]]; then
+  echo "pi: projecting instructions to ~/.pi/agent/AGENTS.md"
+  ( cd "$REPO_DIR" && uv run python -c "
+from pathlib import Path
+from appa_lib.project_pi import project_pi
+project_pi(Path('instructions'), Path.home() / '.pi/agent/AGENTS.md')
+" )
+fi
+
+# --- summary ---
+echo
+echo "appa bootstrap complete."
+[[ -d "$BACKUP_DIR" ]] && echo "  backups:               $BACKUP_DIR"
+[[ $HAVE_CLAUDE -eq 1 ]] && echo "  claude:                wired (symlinks + plugins; memory projection deferred)"
+[[ $HAVE_PI -eq 1 ]] && echo "  pi:                    wired"
+echo "  appa CLI:              $HOME/.local/bin/appa"
