@@ -34,3 +34,44 @@ else
 fi
 
 echo "appa bootstrap: repo=$REPO_DIR host=$HOSTNAME_SHORT claude=$HAVE_CLAUDE pi=$HAVE_PI uv=1 plannotator=$HAVE_PLANNOTATOR"
+
+# --- sync venv ---
+echo "uv sync ..."
+( cd "$REPO_DIR" && uv sync --quiet )
+
+# --- symlink helper ---
+_link() {
+  local src="$1" dst="$2"
+  if [[ -L "$dst" ]]; then
+    if [[ "$(readlink "$dst")" == "$src" ]]; then
+      return 0
+    fi
+    rm "$dst"
+  elif [[ -e "$dst" ]]; then
+    mkdir -p "$BACKUP_DIR"
+    mv "$dst" "$BACKUP_DIR/"
+    echo "  backed up: $dst -> $BACKUP_DIR/"
+  fi
+  mkdir -p "$(dirname "$dst")"
+  ln -s "$src" "$dst"
+  echo "  linked:    $dst -> $src"
+}
+
+# --- claude symlinks ---
+if [[ $HAVE_CLAUDE -eq 1 ]]; then
+  echo "claude: linking shared content"
+  _link "$REPO_DIR/commands"                    "$HOME/.claude/commands"
+  _link "$REPO_DIR/skills"                      "$HOME/.claude/skills"
+  _link "$REPO_DIR/agents/claude/settings.json" "$HOME/.claude/settings.json"
+  if [[ -s "$REPO_DIR/agents/claude/CLAUDE.md" ]]; then
+    _link "$REPO_DIR/agents/claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
+  fi
+fi
+
+# --- pi symlinks ---
+# Note: pi's settings.json is managed per-machine, not in appa.
+if [[ $HAVE_PI -eq 1 ]]; then
+  echo "pi: linking shared content"
+  _link "$REPO_DIR/commands" "$HOME/.pi/agent/prompts"
+  _link "$REPO_DIR/skills"   "$HOME/.pi/agent/skills"
+fi
