@@ -28,9 +28,10 @@ HAVE_PLANNOTATOR=0
 if command -v plannotator >/dev/null 2>&1; then
   HAVE_PLANNOTATOR=1
 else
-  echo "note: 'plannotator' CLI not found on PATH" >&2
-  echo "      the plannotator plugin/extension will install but its skills won't work end-to-end" >&2
-  echo "      install: curl -fsSL https://plannotator.ai/install.sh | bash" >&2
+  echo "note: 'plannotator' CLI binary not on PATH" >&2
+  echo "      needed if you invoke plannotator directly or via claude slash commands (/plannotator-review etc.)" >&2
+  echo "      pi-coding-agent's plannotator extension is a separate install and doesn't require the CLI" >&2
+  echo "      install the CLI: curl -fsSL https://plannotator.ai/install.sh | bash" >&2
 fi
 
 echo "appa bootstrap: repo=$REPO_DIR host=$HOSTNAME_SHORT claude=$HAVE_CLAUDE pi=$HAVE_PI uv=1 plannotator=$HAVE_PLANNOTATOR"
