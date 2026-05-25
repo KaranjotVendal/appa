@@ -68,6 +68,25 @@ git push
 - `bootstrap.sh` — idempotent setup script run once per machine
 - `src/appa_lib/` — the Python package backing the CLI
 
+## Updating cherry-picked superpowers skills (pi-only)
+
+Pi loads five superpowers skills from `agents/pi/skills/` because superpowers' upstream plugin doesn't ship a pi-compatible install path. The picks are: `brainstorming`, `writing-plans`, `test-driven-development`, `verification-before-completion`, `receiving-code-review`. When upstream changes meaningfully:
+
+```bash
+# update the cached version first
+claude plugin install superpowers@claude-plugins-official
+
+# re-cherry-pick from the updated cache
+SRC=~/.claude/plugins/cache/claude-plugins-official/superpowers/<version>/skills
+DST=~/dev/appa/agents/pi/skills
+for s in brainstorming writing-plans test-driven-development verification-before-completion receiving-code-review; do
+  cp -R "$SRC/$s/." "$DST/$s/"
+done
+appa commit -m "chore: re-cherry-pick superpowers skills (v<n>)"
+```
+
+Claude side gets the update automatically via the plugin install; pi side doesn't, so this manual step is required.
+
 ## Design
 
 See `docs/superpowers/specs/` (gitignored — local-only working artifact).
