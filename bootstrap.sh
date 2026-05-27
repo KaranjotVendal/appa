@@ -145,9 +145,19 @@ if [[ $HAVE_PI -eq 1 ]]; then
   _link "$REPO_DIR/agents/pi/skills" "$HOME/.pi/agent/skills"
 fi
 
-# --- install appa CLI symlink ---
-mkdir -p "$HOME/.local/bin"
-_link "$REPO_DIR/.venv/bin/appa" "$HOME/.local/bin/appa"
+# --- install appa CLI via uv tool ---
+# Migrate from the older design (symlink at ~/.local/bin/appa -> $REPO_DIR/.venv/bin/appa):
+# if such a symlink exists, remove it so `uv tool install` doesn't refuse to overwrite.
+if [[ -L "$HOME/.local/bin/appa" ]]; then
+  link_target="$(readlink "$HOME/.local/bin/appa")"
+  if [[ "$link_target" == "$REPO_DIR/.venv/bin/appa" ]]; then
+    rm "$HOME/.local/bin/appa"
+    echo "  removed stale symlink: ~/.local/bin/appa -> $link_target"
+  fi
+fi
+
+echo "installing appa CLI via uv tool ..."
+uv tool install --editable "$REPO_DIR" --force --quiet
 
 case ":$PATH:" in
   *":$HOME/.local/bin:"*) ;;
