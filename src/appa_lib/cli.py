@@ -29,11 +29,20 @@ def _primary_wd() -> str:
     sys.exit(f"error: {MACHINE_FILE} has no primary_wd; re-run bootstrap")
 
 
-def _project_for_claude() -> None:
+def _project_for_claude() -> bool:
+    """Project canonical instructions into claude's per-project memory dir.
+
+    Returns True on success, False if skipped because the machine file is missing
+    (claude memory projection is deferred; see spec 'Open work' item).
+    """
+    if not MACHINE_FILE.exists():
+        print(f"  claude: projection deferred (no {MACHINE_FILE.name})")
+        return False
     target = Path.home() / ".claude/projects" / encode_path(_primary_wd()) / "memory"
     target.mkdir(parents=True, exist_ok=True)
     project_claude(REPO_DIR / "instructions", target, machine_scope="global")
     print(f"claude: projected -> {target}")
+    return True
 
 
 def _project_for_pi() -> None:
@@ -73,6 +82,8 @@ def _print_diff(name: str, ours: str, theirs: str) -> None:
 def cmd_memory_pull(args: argparse.Namespace) -> None:
     if not _have("claude"):
         sys.exit("memory pull is claude-only; claude not detected")
+    if not MACHINE_FILE.exists():
+        sys.exit(f"error: {MACHINE_FILE} missing; claude memory projection is currently deferred")
     from appa_lib.transform_pull import transform_pull
 
     live = _claude_memory_dir()
@@ -116,6 +127,8 @@ def cmd_memory_pull(args: argparse.Namespace) -> None:
 def cmd_memory_push(args: argparse.Namespace) -> None:
     if not _have("claude"):
         sys.exit("memory push is claude-only; claude not detected")
+    if not MACHINE_FILE.exists():
+        sys.exit(f"error: {MACHINE_FILE} missing; claude memory projection is currently deferred")
     _project_for_claude()
 
 
@@ -144,14 +157,16 @@ def cmd_status(args: argparse.Namespace) -> None:
     subprocess.run(["git", "-C", str(REPO_DIR), "status", "--short"], check=False)
     print()
     print("live memory diff (claude):", flush=True)
-    if _have("claude"):
+    if not _have("claude"):
+        print("  claude not present")
+    elif not MACHINE_FILE.exists():
+        print(f"  deferred (no {MACHINE_FILE.name})")
+    else:
         live = _claude_memory_dir()
         subprocess.run(
             ["diff", "-rq", str(REPO_DIR / "memory/snapshot"), str(live)],
             check=False,
         )
-    else:
-        print("  claude not present")
 
 
 def main() -> None:

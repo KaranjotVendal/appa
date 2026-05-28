@@ -19,5 +19,6 @@
     }
   },
   "effortLevel": "medium",
+  "skipDangerousModePermissionPrompt": true,
   "theme": "dark"
 }
