@@ -52,10 +52,16 @@ def _project_for_pi() -> None:
     print(f"pi: projected -> {agents_md}")
 
 
+def _project_for_claude_global() -> None:
+    claude_md = Path.home() / ".claude/CLAUDE.md"
+    claude_md.parent.mkdir(parents=True, exist_ok=True)
+    project_block(REPO_DIR / "instructions", claude_md)
+    print(f"claude: projected -> {claude_md}")
+
+
 def cmd_sync(args: argparse.Namespace) -> None:
-    # TODO: if both are present. can be deferred to v2
     if _have("claude"):
-        _project_for_claude()
+        _project_for_claude_global()
     if _have("pi"):
         _project_for_pi()
 
