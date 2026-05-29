@@ -126,14 +126,14 @@ _link() {
 }
 
 # --- claude symlinks ---
+# CLAUDE.md is NOT symlinked: it's a real per-machine file that holds the
+# appa-managed block of global instructions (projected below), the same way
+# pi's AGENTS.md works.
 if [[ $HAVE_CLAUDE -eq 1 ]]; then
   echo "claude: linking shared content"
   _link "$REPO_DIR/commands"                    "$HOME/.claude/commands"
   _link "$REPO_DIR/skills"                      "$HOME/.claude/skills"
   _link "$REPO_DIR/agents/claude/settings.json" "$HOME/.claude/settings.json"
-  if [[ -s "$REPO_DIR/agents/claude/CLAUDE.md" ]]; then
-    _link "$REPO_DIR/agents/claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
-  fi
 fi
 
 # --- pi symlinks ---
@@ -198,13 +198,21 @@ for plugin_id, enabled in (settings.get("enabledPlugins") or {}).items():
 PY
 fi
 
-# --- project instructions to pi (claude-side projection deferred) ---
+# --- project global instructions ---
+if [[ $HAVE_CLAUDE -eq 1 ]]; then
+  echo "claude: projecting global instructions to ~/.claude/CLAUDE.md"
+  ( cd "$REPO_DIR" && uv run python -c "
+from pathlib import Path
+from appa_lib.project_block import project_block
+project_block(Path('instructions'), Path.home() / '.claude/CLAUDE.md')
+" )
+fi
 if [[ $HAVE_PI -eq 1 ]]; then
   echo "pi: projecting instructions to ~/.pi/agent/AGENTS.md"
   ( cd "$REPO_DIR" && uv run python -c "
 from pathlib import Path
-from appa_lib.project_pi import project_pi
-project_pi(Path('instructions'), Path.home() / '.pi/agent/AGENTS.md')
+from appa_lib.project_block import project_block
+project_block(Path('instructions'), Path.home() / '.pi/agent/AGENTS.md')
 " )
 fi
 
@@ -212,6 +220,6 @@ fi
 echo
 echo "appa bootstrap complete."
 [[ -d "$BACKUP_DIR" ]] && echo "  backups:               $BACKUP_DIR"
-[[ $HAVE_CLAUDE -eq 1 ]] && echo "  claude:                wired (symlinks + plugins; memory projection deferred)"
+[[ $HAVE_CLAUDE -eq 1 ]] && echo "  claude:                wired (symlinks + plugins + global CLAUDE.md)"
 [[ $HAVE_PI -eq 1 ]] && echo "  pi:                    wired"
 echo "  appa CLI:              $HOME/.local/bin/appa"
