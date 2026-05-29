@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from appa_lib.project_pi import project_pi
+from appa_lib.project_block import project_block
 
 
 GLOBAL_INSTR = """---
@@ -37,7 +37,7 @@ def _setup(tmp_path: Path) -> tuple[Path, Path]:
 
 def test_creates_file_with_block_when_missing(tmp_path):
     instr, agents_md = _setup(tmp_path)
-    project_pi(instr, agents_md)
+    project_block(instr, agents_md)
     text = agents_md.read_text()
     assert BEGIN in text and END in text
     assert "## per-task-approval" in text
@@ -48,7 +48,7 @@ def test_creates_file_with_block_when_missing(tmp_path):
 def test_preserves_user_content_outside_block(tmp_path):
     instr, agents_md = _setup(tmp_path)
     agents_md.write_text("My local notes.\n\nKeep me.\n")
-    project_pi(instr, agents_md)
+    project_block(instr, agents_md)
     text = agents_md.read_text()
     assert "My local notes." in text
     assert "Keep me." in text
@@ -58,7 +58,7 @@ def test_preserves_user_content_outside_block(tmp_path):
 def test_replaces_existing_block_idempotently(tmp_path):
     instr, agents_md = _setup(tmp_path)
     agents_md.write_text(f"Header.\n\n{BEGIN}\nstale content\n{END}\n\nFooter.\n")
-    project_pi(instr, agents_md)
+    project_block(instr, agents_md)
     text = agents_md.read_text()
     assert "Header." in text
     assert "Footer." in text

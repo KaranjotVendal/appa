@@ -8,7 +8,7 @@ from pathlib import Path
 
 from appa_lib.encode_path import encode_path
 from appa_lib.project_claude import project_claude
-from appa_lib.project_pi import project_pi
+from appa_lib.project_block import project_block
 
 
 REPO_DIR = Path(__file__).resolve().parent.parent.parent
@@ -48,7 +48,7 @@ def _project_for_claude() -> bool:
 def _project_for_pi() -> None:
     agents_md = Path.home() / ".pi/agent/AGENTS.md"
     agents_md.parent.mkdir(parents=True, exist_ok=True)
-    project_pi(REPO_DIR / "instructions", agents_md)
+    project_block(REPO_DIR / "instructions", agents_md)
     print(f"pi: projected -> {agents_md}")
 
 

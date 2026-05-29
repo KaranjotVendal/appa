@@ -1,5 +1,3 @@
-"""Project canonical instructions into the appa-managed block of pi's user-global AGENTS.md."""
-
 import re
 from pathlib import Path
 
@@ -23,21 +21,26 @@ def _build_block(instructions_dir: Path) -> str:
     return f"{BEGIN}\n{body_block}{END}\n"
 
 
-def project_pi(instructions_dir: Path, agents_md_path: Path) -> None:
+def project_block(instructions_dir: Path, target_path: Path) -> None:
+    """Write the appa-managed block of global instructions into target_path.
+
+    Any content outside the BEGIN/END markers is preserved. Used for both
+    pi's AGENTS.md and claude's user-global CLAUDE.md.
+    """
     instructions_dir = Path(instructions_dir)
-    agents_md_path = Path(agents_md_path)
+    target_path = Path(target_path)
     block = _build_block(instructions_dir)
 
-    if not agents_md_path.exists():
-        agents_md_path.parent.mkdir(parents=True, exist_ok=True)
-        agents_md_path.write_text(block)
+    if not target_path.exists():
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        target_path.write_text(block)
         return
 
-    existing = agents_md_path.read_text()
+    existing = target_path.read_text()
     pattern = re.compile(re.escape(BEGIN) + r".*?" + re.escape(END) + r"\n?", re.DOTALL)
     if pattern.search(existing):
         new = pattern.sub(block, existing)
     else:
         sep = "" if existing.endswith("\n") else "\n"
         new = existing + sep + "\n" + block
-    agents_md_path.write_text(new)
+    target_path.write_text(new)
